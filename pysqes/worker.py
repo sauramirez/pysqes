@@ -1,7 +1,7 @@
 import pickle
 import time
 
-from task import BasePySQS
+from .task import BasePySQS
 
 
 class Worker(BasePySQS):
@@ -19,8 +19,7 @@ class Worker(BasePySQS):
                 # should call a save function on the backend
             time.sleep(1)
 
-
     @classmethod
     def run(cls, queue, timeout):
         worker = cls(queue, timeout)
-
+        worker.work()
