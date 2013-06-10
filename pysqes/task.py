@@ -1,26 +1,16 @@
 import time
 import pickle
 
-from boto.sqs.connection import SQSConnection
 from boto.sqs.message import Message
-
-conn = None
 
 SQS_TASKER = {
     'default': 'sqs-tasker'
 }
 
 
-def get_queue(queue='default', queues={}, aws_access_key=None, aws_secret_key=None):
-    global conn
-
-    if not aws_access_key:
-        raise Exception("Need to provide an aws access key")
-    if not aws_secret_key:
-        raise Exception("Need to provide an aws secret key")
-
+def get_queue(conn, queue='default', queues={}, aws_access_key=None, aws_secret_key=None):
     if not conn:
-        conn = SQSConnection(aws_access_key, aws_secret_key)
+        raise ("Need to provide a valid AWS connection")
     queue = conn.create_queue(queues.get(queue))
     return queue
 
@@ -42,23 +32,16 @@ class DelayTask(object):
 
 class BasePySQS(object):
 
-    def __init__(self, queue='default', backend=None, queues=None, aws_access_key=None, aws_secret_key=None):
+    def __init__(self, conn, queue='default', backend=None, queues=None):
         if not queues:
             queues = {
                 'default': 'pysqes'
             }
-        self.queue = get_queue(queue, queues=queues, aws_access_key=aws_access_key, aws_secret_key=aws_secret_key)
+        self.queue = get_queue(conn, queue, queues=queues)
 
 
 class SQSTask(BasePySQS):
     callback = None
-
-    def __init__(self, queue='default', backend=None, queues=None, aws_access_key=None, aws_secret_key=None):
-        if not queues:
-            queues = {
-                'default': 'pysqes'
-            }
-        self.queue = get_queue(queue, queues=queues, aws_access_key=aws_access_key, aws_secret_key=aws_secret_key)
 
     def task(self, fun):
         delay = DelayTask()
