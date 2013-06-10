@@ -1,4 +1,3 @@
-import time
 import pickle
 
 from boto.sqs.message import Message
@@ -63,4 +62,3 @@ class SQSTask(BasePySQS):
     def run(self, task_data):
         if not self.callback:
             raise("Not implemented")
-

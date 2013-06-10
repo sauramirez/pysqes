@@ -7,21 +7,26 @@ from .task import BasePySQS
 
 class Worker(BasePySQS):
     _shutdown = False
+    backend = None
 
     def register_signal_handlers(self):
         """
         Register our handlers so that we can stop the process from runing
         """
-        signal.signal(signal.SIGTERM, self.shutdown)
-        signal.signal(signal.SIGINT, self.shutdown)
-        signal.signal(signal.SIGQUIT, self.shutdown)
-        signal.signal(signal.SIGUSR1, self.shutdown)
+        signal.signal(signal.SIGTERM, self._shutdown_signal)
+        signal.signal(signal.SIGINT, self._shutdown_signal)
+        signal.signal(signal.SIGQUIT, self._shutdown_signal)
+        signal.signal(signal.SIGUSR1, self._shutdown_signal)
 
-    def shutdown(self, signum, frame):
+    def shutdown(self):
         self._shutdown = True
 
-    def work(self):
-        self.register_signal_handlers()
+    def _shutdown_signal(self, signum, frame):
+        self.shutdown()
+
+    def work(self, thread=False):
+        if not thread:
+            self.register_signal_handlers()
 
         while True:
             messages = self.queue.get_messages()
@@ -33,6 +38,9 @@ class Worker(BasePySQS):
                 self.queue.delete_message(message)
 
                 # should call a save function on the backend
+                if self.backend:
+                    self.backend.store_result(result)
+
             time.sleep(1)
 
             if self._shutdown:

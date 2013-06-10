@@ -1,3 +1,4 @@
+import pickle
 
 
 class SQSConnStub(object):
@@ -10,3 +11,22 @@ class SQSQueueStub(object):
 
     def write(self, m):
         return True
+
+    def get_messages(self):
+        return [SQSMessageStub()]
+
+    def delete_message(self, message):
+        pass
+
+
+class SQSMessageStub(object):
+    def get_body(self):
+        return pickle.dumps({
+            'fun': add,
+            'args': [1, 2],
+            'kwargs': {}
+        })
+
+
+def add(a, b):
+    return a + b
