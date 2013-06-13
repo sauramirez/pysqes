@@ -20,11 +20,6 @@ class DelayTask(object):
     # the default module to be used for serializing the data
     # we receive, the serializer should implement the loads
     # and dumps methods
-    serializer = pickle
-
-    def __init__(self, serializer=None):
-        if serializer:
-            self.serializer = serializer
 
     def __call__(self, *args, **kwargs):
         task_data = {
@@ -33,12 +28,11 @@ class DelayTask(object):
             'fun': self.fun
         }
 
-        task_data = self.serializer.dumps(task_data)
         self.task.schedule_task(task_data)
 
 
 class BasePySQS(object):
-    serializer = None
+    serializer = pickle
 
     def __init__(self, conn, queue='default', backend=None,
                  queues=None, serializer=None):
@@ -47,14 +41,15 @@ class BasePySQS(object):
                 'default': 'pysqes'
             }
         self.queue = get_queue(conn, queue, queues=queues)
-        self.serializer = serializer
+        if serializer:
+            self.serializer = serializer
 
 
 class SQSTask(BasePySQS):
     callback = None
 
     def task(self, fun):
-        delay = DelayTask(serializer=self.serializer)
+        delay = DelayTask()
         delay.fun = fun
         delay.task = self
         setattr(fun, 'delay', delay)
@@ -65,7 +60,7 @@ class SQSTask(BasePySQS):
     def schedule_task(self, data):
         queue = self.queue
         m = Message()
-        m.set_body(data)
+        m.set_body(self.serializer.dumps(data))
         status = queue.write(m)
 
         return status

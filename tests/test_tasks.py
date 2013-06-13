@@ -1,4 +1,5 @@
 import unittest
+import json
 
 from pysqes.task import SQSTask
 
@@ -9,6 +10,7 @@ from tests.stubs import SQSConnStub
 class TestPysqesTask(unittest.TestCase):
     def setUp(self):
         conn = SQSConnStub()
+        self.conn = conn
         self.task = SQSTask(conn)
 
     def test_schedule_task(self):
@@ -21,6 +23,11 @@ class TestPysqesTask(unittest.TestCase):
         """
         add.delay(1, 2)
         self.assertIsNotNone(add.delay)
+
+    def test_serializer(self):
+        task = SQSTask(self.conn, serializer=json)
+        status = task.schedule_task({})
+        self.assertTrue(status, msg="Error with the serializer")
 
 
 if __name__ == '__main__':
