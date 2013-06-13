@@ -17,6 +17,14 @@ def get_queue(conn, queue='default', queues={}, aws_access_key=None, aws_secret_
 class DelayTask(object):
     task = None
     fun = None
+    # the default module to be used for serializing the data
+    # we receive, the serializer should implement the loads
+    # and dumps methods
+    serializer = pickle
+
+    def __init__(self, serializer=None):
+        if serializer:
+            self.serializer = serializer
 
     def __call__(self, *args, **kwargs):
         task_data = {
@@ -25,25 +33,28 @@ class DelayTask(object):
             'fun': self.fun
         }
 
-        task_data = pickle.dumps(task_data)
+        task_data = self.serializer.dumps(task_data)
         self.task.schedule_task(task_data)
 
 
 class BasePySQS(object):
+    serializer = None
 
-    def __init__(self, conn, queue='default', backend=None, queues=None):
+    def __init__(self, conn, queue='default', backend=None,
+                 queues=None, serializer=None):
         if not queues:
             queues = {
                 'default': 'pysqes'
             }
         self.queue = get_queue(conn, queue, queues=queues)
+        self.serializer = serializer
 
 
 class SQSTask(BasePySQS):
     callback = None
 
     def task(self, fun):
-        delay = DelayTask()
+        delay = DelayTask(serializer=self.serializer)
         delay.fun = fun
         delay.task = self
         setattr(fun, 'delay', delay)

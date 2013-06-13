@@ -21,6 +21,7 @@ class WorkerThread(threading.Thread):
 
 
 class TestPysqesWorker(unittest.TestCase):
+
     def setUp(self):
         conn = SQSConnStub()
         self.worker = Worker(conn)
@@ -36,12 +37,9 @@ class TestPysqesWorker(unittest.TestCase):
         while not self.backend.last_result:
             pass
 
-        self.assertEquals(self.backend.last_result, 3)
-        # shutdown the worker thread
         self.worker.shutdown()
+        self.assertEquals(self.backend.last_result, 3)
 
-#worker = Worker(conn)
-#worker.work()
 
 if __name__ == '__main__':
     unittest.main()
