@@ -6,12 +6,17 @@ from .task import BasePySQS
 
 
 class Worker(BasePySQS):
+    """
+    Workers are in charge of fetching new jobs from SQS and then executes them
+    if there are any.
+    """
     _shutdown = False
+    # the backend should speciy a store_result method
     backend = None
 
     def register_signal_handlers(self):
         """
-        Register our handlers so that we can stop the process from runing
+        Register our handlers so that we can stop the process from running
         """
         signal.signal(signal.SIGTERM, self._shutdown_signal)
         signal.signal(signal.SIGINT, self._shutdown_signal)
@@ -25,23 +30,29 @@ class Worker(BasePySQS):
         self.shutdown()
 
     def work(self, thread=False):
+        """
+        This is the method in charge of fetching the jobs from SQS
+        """
         if not thread:
             self.register_signal_handlers()
 
+        # start running our worker
         while True:
             messages = self.queue.get_messages()
             for message in messages:
                 task = message.get_body()
                 task = pickle.loads(task)
                 result = task['fun'](*task['args'], **task['kwargs'])
-                print "result {0}".format(result)
                 self.queue.delete_message(message)
 
-                # should call a save function on the backend
+                # if a backend has been specified then we can run a save
+                # method on it
                 if self.backend:
                     self.backend.store_result(result)
 
-            time.sleep(1)
+            # if no messages received then we can just sleep for a while
+            if len(messages) == 0:
+                time.sleep(1)
 
             if self._shutdown:
                 break
