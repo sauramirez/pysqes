@@ -1,7 +1,7 @@
 import threading
 import unittest
 
-from pysqes.worker import Worker
+from pysqes.worker import SQSWorker
 
 from tests.stubs import SQSConnStub
 
@@ -24,7 +24,7 @@ class TestPysqesWorker(unittest.TestCase):
 
     def setUp(self):
         conn = SQSConnStub()
-        self.worker = Worker(conn)
+        self.worker = SQSWorker(conn)
         self.worker.backend = WorkerBackend()
         self.backend = self.worker.backend
 

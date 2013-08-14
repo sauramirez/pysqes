@@ -5,7 +5,7 @@ import time
 from .task import BasePySQS
 
 
-class Worker(BasePySQS):
+class SQSWorker(BasePySQS):
     """
     Workers are in charge of fetching new jobs from SQS and then executes them
     if there are any.
