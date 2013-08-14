@@ -1,3 +1,6 @@
+"""
+The Task module defines the basic delay tasks we can create.
+"""
 import pickle
 
 from boto.sqs.message import Message

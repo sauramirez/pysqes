@@ -28,5 +28,8 @@ class SQSMessageStub(object):
         })
 
 
-def add(a, b):
-    return a + b
+def add(x, y):
+    """
+    Simple function to be used as a task by the SQSMessageStub.
+    """
+    return x + y
