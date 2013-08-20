@@ -2,7 +2,7 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(
-    name='pysques',
+    name='pysqes',
     version='0.1',
     description='A simple queue service using Amazon SQS and boto',
     long_description=open('README.md').read(),
