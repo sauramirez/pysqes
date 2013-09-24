@@ -14,6 +14,11 @@ class SQSWorker(BasePySQS):
     # the backend should speciy a store_result method
     backend = None
 
+    def __init__(self, *args, **kwargs):
+        backend = kwargs.pop('backend', None)
+        self.backend = backend
+        super(SQSWorker, self).__init__(*args, **kwargs)
+
     def register_signal_handlers(self):
         """
         Register our handlers so that we can stop the process from running
@@ -42,13 +47,24 @@ class SQSWorker(BasePySQS):
             for message in messages:
                 task = message.get_body()
                 task = pickle.loads(task)
-                result = task['fun'](*task['args'], **task['kwargs'])
+                task_id = task['task_id']
+                task_name = task['name']
+                success = False
+                tries = 0
+                while not success and tries < 3:
+                    try:
+                        result = task['fun'](*task['args'], **task['kwargs'])
+                        success = True
+                    except Exception, e:
+                        result = e
+                    tries += 1
+
                 self.queue.delete_message(message)
 
                 # if a backend has been specified then we can run a save
                 # method on it
                 if self.backend:
-                    self.backend.store_result(result)
+                    self.backend.store_result(success, result, task_id, task_name)
 
             # if no messages received then we can just sleep for a while
             if len(messages) == 0:
