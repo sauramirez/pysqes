@@ -15,8 +15,9 @@ class SQSWorker(BasePySQS):
     backend = None
 
     def __init__(self, *args, **kwargs):
-        backend = kwargs.pop('backend', None)
-        self.backend = backend
+        self.backend = kwargs.pop('backend', None)
+        # time to wait in between jobs
+        self.wait_time = kwargs.pop('wait_time', 3)
         super(SQSWorker, self).__init__(*args, **kwargs)
 
     def register_signal_handlers(self):
@@ -64,11 +65,13 @@ class SQSWorker(BasePySQS):
                 # if a backend has been specified then we can run a save
                 # method on it
                 if self.backend:
-                    self.backend.store_result(success, result, task_id, task_name)
+                    self.backend.store_result(
+                        success, result, task_id, task_name,
+                        arguments=task['args'], karguments=task['kwargs'])
 
             # if no messages received then we can just sleep for a while
             if len(messages) == 0:
-                time.sleep(1)
+                time.sleep(self.wait_time)
 
             if self._shutdown:
                 break
