@@ -16,7 +16,7 @@ from boto.sqs.connection import SQSConnection
 
 from pysqes.task import SQSTask
 
-conn = SQSConnection('ACCESS_KEY', 'SECRETE_KEY')
+conn = SQSConnection('ACCESS_KEY', 'SECRET_KEY')
 task = SQSTask(conn)
 
 

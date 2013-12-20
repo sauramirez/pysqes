@@ -48,8 +48,8 @@ class SQSWorker(BasePySQS):
             for message in messages:
                 task = message.get_body()
                 task = pickle.loads(task)
-                task_id = task['task_id']
-                task_name = task['name']
+                task_id = task.get('task_id', None)
+                task_name = task.get('name', "")
                 success = False
                 tries = 0
                 while not success and tries < 3:
