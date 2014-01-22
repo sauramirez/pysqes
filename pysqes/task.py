@@ -1,10 +1,13 @@
 """
 The Task module defines the basic delay tasks we can create.
 """
+import json
 import pickle
 import uuid
 
 from boto.sqs.message import Message
+
+from .utils import import_fn
 
 SQS_TASKER = {
     'default': 'sqs-tasker'
@@ -45,21 +48,103 @@ class DelayTask(object):
 
 class BasePySQS(object):
     serializer = pickle
+    _queue = None
 
     def __init__(self, conn, queue='default',
                  queues=None, serializer=None):
+        self.conn = conn
         if not queues:
             queues = {
                 'default': 'pysqes'
             }
 
-        self.queue = get_queue(conn, queue, queues=queues)
+        self.queues = queues
+        self.queue_name = queue
         if serializer:
             self.serializer = serializer
 
+    @property
+    def queue(self):
+        if not self._queue:
+            self._queue = get_queue(self.conn, self.queue_name, queues=self.queues)
 
-class SQSTask(BasePySQS):
-    callback = None
+        return self._queue
+
+
+class Task(object):
+    _fn = None
+    _args = None
+    _kwargs = None
+    # if we're not supposed to be serializing a function
+    data = None
+
+    @classmethod
+    def unserialize_task(cls, blob):
+        """
+        Create task object from an unserialized data string
+
+        Args:
+            blob (String) - String containing the task data. It can only handle json strings for now.
+
+        Returns:
+            task (Task) - Task instances with the data contained inside the blob
+        """
+        task_data = json.loads(blob)
+        fn = task_data.get('_fn', None)
+        fn = import_fn(fn)
+        args = task_data.get('args', None)
+        kwargs = task_data.get('kwargs', None)
+        json_data = task_data.get('data', None)
+
+        return cls(fn, args, kwargs, data=json_data)
+
+    def __init__(self, fn=None, arguments=None, kw_args=None, *args, **kwargs):
+        self._result = None
+        if fn:
+            self._fn_object = fn
+            self._fn = "{0}.{1}".format(fn.__module__, fn.__name__)
+            self._args = arguments if arguments else []
+            self._kwargs = kw_args if kw_args else {}
+
+        self.data = kwargs.pop('data', {})
+
+    @property
+    def func(self):
+        if not self._fn:
+            return None
+
+        if not self._fn_object:
+            return import_fn(self._fn)
+
+        return self._fn_object
+
+    def serialize(self):
+        """
+        Serialize the task data to a format that can be stored in the Queue
+
+        Returns:
+            (String) - serialized task data
+        """
+        # the data dictionary we'll be sending to the queue
+        task_data = self.data
+        if self._fn:
+            task_data = {
+                "_fn": self._fn,
+                "args": self._args,
+                "kwargs": self._kwargs
+            }
+
+        return json.dumps(task_data)
+
+    def run(self):
+        func = self.func
+        try:
+            self._result = func(*self._args, **self._kwargs)
+        finally:
+            # do any cleanup needed
+            pass
+
+        return self._result
 
     def task(self, fun):
         delay = DelayTask()
@@ -77,7 +162,3 @@ class SQSTask(BasePySQS):
         status = queue.write(msg)
 
         return status
-
-    def run(self, task_data):
-        if not self.callback:
-            raise("Not implemented")
