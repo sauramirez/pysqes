@@ -1,10 +1,13 @@
 from boto.sqs.connection import SQSConnection
 
 
-class PysqesConnection():
+class Connection():
     """
     This class acts as a facade for an SQSConnection
     so that we connect to SQS it until we need it.
+
+    See http://docs.pythonboto.org/en/latest/ref/sqs.html#module-boto.sqs.connection for
+    a list of all the methods you can use.
     """
     conn = None
     aws_access_key = None
@@ -25,4 +28,4 @@ class PysqesConnection():
         return getattr(self.conn, name)
 
     def __repr__(self):
-        return 'PysqesConnection'
+        return 'Connection'

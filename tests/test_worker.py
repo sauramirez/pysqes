@@ -1,9 +1,14 @@
 import threading
 import unittest
+import time
+import tempfile
 
-from pysqes.worker import SQSWorker
+from pysqes.worker import Worker
+from pysqes.queue import Queue
 
 from tests.stubs import SQSConnStub
+
+from .test_tasks import test_func
 
 
 class WorkerBackend(object):
@@ -12,9 +17,28 @@ class WorkerBackend(object):
     test that the workers are storing the result if a backend is present.
     """
     last_result = None
+    file_name = None
 
-    def store_result(self, success, result, task_id, task_name, arguments, karguments):
+    def __init__(self):
+        f = tempfile.NamedTemporaryFile(delete=False)
+        self.file_name = f.name
+        f.close()
+
+    def store_result(self, success, result, *args, **kwargs):
         self.last_result = result
+
+        with open(self.file_name, 'w+b') as f:
+            f.write(str(result))
+
+    @property
+    def result(self):
+        """
+        Retrieve the result from somewhere
+        """
+        with open(self.file_name, 'r') as f:
+            last_result = f.read()
+
+        return last_result
 
 
 class WorkerThread(threading.Thread):
@@ -27,22 +51,25 @@ class WorkerThread(threading.Thread):
 class TestPysqesWorker(unittest.TestCase):
 
     def setUp(self):
-        conn = SQSConnStub()
-        self.worker = SQSWorker(conn)
-        self.worker.backend = WorkerBackend()
-        self.backend = self.worker.backend
+        connection = SQSConnStub()
+        self.backend = WorkerBackend()
+        self.queue = Queue(connection, 'pysqes_test', backend=self.backend)
 
-    def test_work(self):
+    def test_worker(self):
+        self.queue.enqueue(test_func, 1, 2)
+
+        worker = Worker(self.queue)
         workThread = WorkerThread()
-        workThread.worker = self.worker
+        workThread.worker = worker
         workThread.start()
-
-        # wait for a result to be stored
-        while not self.backend.last_result:
+        #worker.work()
+        try:
+            time.sleep(3)
+            worker.shutdown()
+        except:
             pass
 
-        self.worker.shutdown()
-        self.assertEquals(self.backend.last_result, 3)
+        self.assertEqual(self.backend.result, '3')
 
 
 if __name__ == '__main__':

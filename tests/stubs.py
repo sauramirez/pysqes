@@ -1,4 +1,6 @@
-import pickle
+import json
+
+from collections import deque
 
 
 class SQSConnStub(object):
@@ -11,21 +13,28 @@ class SQSConnStub(object):
 
 
 class SQSQueueStub(object):
+    _queue = deque()
 
     def write(self, m):
-        return True
+        return self._queue.append(m)
 
-    def get_messages(self):
-        return [SQSMessageStub()]
+    def get_messages(self, *args, **kwargs):
+        if len(self._queue):
+            return [self._queue.popleft()]
+        else:
+            return []
 
     def delete_message(self, message):
         pass
 
+    def read(self):
+        return self._queue.popleft()
+
 
 class SQSMessageStub(object):
     def get_body(self):
-        return pickle.dumps({
-            'fun': add,
+        return json.dumps({
+            'fun': '{0}.{1}'.format(add.__module__, add.__name__),
             'args': [1, 2],
             'kwargs': {}
         })
