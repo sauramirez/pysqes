@@ -2,9 +2,7 @@ import unittest
 
 from pysqes.task import Task
 
-
-def test_func(a, b, *args, **kwargs):
-    return a + b
+from .utils import add_func
 
 
 class TestTask(unittest.TestCase):
@@ -12,10 +10,10 @@ class TestTask(unittest.TestCase):
         pass
 
     def test_serialize(self):
-        task = Task(test_func, [1, 2])
+        task = Task(add_func, [1, 2])
         task_data = task.serialize()
 
-        self.assertEqual(task_data, '{"args": [1, 2], "_fn": "tests.test_tasks.test_func", "kwargs": {}}', msg="Error in task serialization")
+        self.assertEqual(task_data, '{"args": [1, 2], "_fn": "tests.utils.add_func", "kwargs": {}}', msg="Error in task serialization")
 
         task2 = Task(data={
             "key": 3
@@ -25,7 +23,7 @@ class TestTask(unittest.TestCase):
         self.assertEqual(task2_data, '{"key": 3}', msg="Data couldn't be serialized")
 
     def test_run(self):
-        task = Task(test_func, [1, 2])
+        task = Task(add_func, [1, 2])
 
         result = task.run()
         self.assertEqual(result, 3, msg="Result is not correct for the arguments provided")
@@ -38,7 +36,7 @@ class TestTask(unittest.TestCase):
             task2.run()
 
     def test_unserialize_task(self):
-        task = Task(test_func, [1, 2])
+        task = Task(add_func, [1, 2])
         task_data = task.serialize()
 
         task2 = Task.unserialize_task(task_data)

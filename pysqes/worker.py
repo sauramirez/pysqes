@@ -1,15 +1,7 @@
-import errno
 import signal
-import time
-import os
-import multiprocessing
 import logging
 
-try:
-    import gevent
-    gevent_support = True
-except ImportError:
-    gevent_support = False
+from .runners.process_runner import ProcessRunner
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +12,26 @@ class Worker(object):
     if there are any.
     """
     _shutdown = False
-    _child_process = 0
     # the backend should speciy a store_result method
     backend = None
+    runner = None
+    # number of messages to get from the queue at the same time
+    num_messages = 5
 
-    def __init__(self, queue, *args, **kwargs):
+    def __init__(self, queue, runner=None, num_messages=5, *args, **kwargs):
         """
         """
         self.queue = queue
-        #self.backend = kwargs.pop('backend', None)
 
         # time to wait in between jobs
         self.wait_time = kwargs.pop('wait_time', 3)
+        self.num_messages = num_messages
+
+        if runner:
+            self.runner = runner
+        else:
+            self.runner = ProcessRunner()
+            self.runner.worker = self
 
     def register_signal_handlers(self):
         """
@@ -44,27 +44,12 @@ class Worker(object):
 
     def shutdown(self):
         self._shutdown = True
-
-        if self._child_process:
-            try:
-                os.kill(self._child_process, signal.SIGKILL)
-            except OSError as e:
-                # ESRCH ("No such process") is fine with us
-                if e.errno != errno.ESRCH:
-                    logger.debug('Process already down.')
-                    raise
+        self.runner.shutdown()
 
         raise SystemExit()
 
     def _shutdown_signal(self, signum, frame):
         self.shutdown()
-
-    #new
-    def run(self, task, thread=False):
-        if not thread:
-            self.register_signal_handlers()
-
-        task.run()
 
     def work(self, thread=False):
         """
@@ -75,31 +60,14 @@ class Worker(object):
 
         # start running our worker
         while True:
-            tasks = self.queue.dequeue()
-            for message, task in tasks:
-                result = self.perform_task(task)
-                logger.info("Received result from task: {0}".format(result))
-                self.queue.delete_message(message)
+            tasks = self.queue.dequeue(num_messages=self.num_messages)
+            self.runner.perform_tasks(tasks)
 
             if self._shutdown:
                 break
 
-    def perform_task(self, task):
-        child_pid = os.fork()
-        if child_pid == 0:
-            result = task.run()
-            print "Result %s" % result
-            os._exit(int(not False))
+    def finished_task(self, task, message):
+        return self.queue.delete_message(message)
 
-        else:
-            logger.info("Started forked worker")
-            self._child_process = child_pid
-            while True:
-                try:
-                    os.waitpid(child_pid, 0)
-                    break
-                except OSError as e:
-                    if e.errno != errno.EINTR:
-                        raise
-
-            return True
+    def finished_tasks(self, tasks, messages):
+        return self.queue.delete_message_batch(messages)

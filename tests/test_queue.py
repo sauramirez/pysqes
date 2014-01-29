@@ -4,7 +4,7 @@ from pysqes.queue import Queue
 from pysqes.task import Task
 
 from .stubs import SQSConnStub
-from .test_tasks import test_func
+from .test_tasks import add_func
 
 
 class TestQueue(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestQueue(unittest.TestCase):
         from the queue.
         """
 
-        task = Task(test_func, [1, 2])
+        task = Task(add_func, [1, 2])
         self.queue.enqueue_task(task)
 
         messages = self.queue.dequeue()
@@ -34,7 +34,7 @@ class TestQueue(unittest.TestCase):
         self.assertEqual(messages2[0][1].data, {"key": 3})
 
     def test_enqueue(self):
-        self.queue.enqueue(test_func, 1, 2)
+        self.queue.enqueue(add_func, 1, 2)
 
         messages = self.queue.dequeue()
         self.assertEqual(messages[0][1]._args, [1, 2])

@@ -1,4 +1,6 @@
+import logging
 import json
+import time
 
 from collections import deque
 
@@ -25,13 +27,24 @@ class SQSQueueStub(object):
             return []
 
     def delete_message(self, message):
-        pass
+        logging.info("deleting message %s" % message)
+
+    def delete_message_batch(self, messages):
+        logging.info("deleting messages %s" % messages)
 
     def read(self):
         return self._queue.popleft()
 
 
 class SQSMessageStub(object):
+    _id = None
+
+    @property
+    def id(self):
+        if not self._id:
+            self._id = time.clock() * 10000000
+        return self._id
+
     def get_body(self):
         return json.dumps({
             'fun': '{0}.{1}'.format(add.__module__, add.__name__),

@@ -1,8 +1,12 @@
+import logging
+
 from itertools import islice
 
 import gevent
 
 from . import BaseRunner
+
+logger = logging.getLogger(__name__)
 
 
 # python generator for this runner
@@ -19,12 +23,14 @@ def join_every(n, iterable):
 
 class GeventRunner(BaseRunner):
     current_threads = []
+    # number of threads to spawn
+    thread_number = 5
 
     def perform_tasks(self, tasks):
         gevent_threads = []
         running_tasks = []
         running_messages = []
-        for gen_tasks in join_every(5, tasks):
+        for gen_tasks in join_every(self.thread_number, tasks):
             for message, task in gen_tasks:
                 gevent_threads.append(gevent.spawn(task.run))
                 running_tasks.append(task)
@@ -37,11 +43,12 @@ class GeventRunner(BaseRunner):
 
     def perform_task(self, task):
         # wait for tasks to finish and rejoin them
-        if len(self.current_threads) > 5:
+        if len(self.current_threads) > self.thread_number:
             gevent.join_all(self.current_threads)
             self.current_threads = []
 
         self.current_threads.append(gevent.spawn(task.run))
 
     def shutdown(self):
-        pass
+        logger.info("Shutting down gevent threads")
+        return gevent.join_all(self.current_threads)

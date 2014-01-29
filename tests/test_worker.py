@@ -4,13 +4,16 @@ import unittest
 import time
 import tempfile
 
+from boto.sqs.connection import SQSConnection
+
 from pysqes.worker import Worker
 from pysqes.queue import Queue
 from pysqes.runners.gevent_runner import GeventRunner
 
 from tests.stubs import SQSConnStub
 
-from .test_tasks import test_func
+from .test_tasks import add_func
+from .conf import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -62,7 +65,7 @@ class TestPysqesWorker(unittest.TestCase):
         self.queue = Queue(connection, 'pysqes_test', backend=self.backend)
 
     def test_worker(self):
-        self.queue.enqueue(test_func, 1, 2)
+        self.queue.enqueue(add_func, 1, 2)
 
         runner = GeventRunner()
         worker = Worker(self.queue, runner=runner)
@@ -80,7 +83,7 @@ class TestPysqesWorker(unittest.TestCase):
         self.assertEqual(self.backend.result, '3')
 
     def test_worker_process(self):
-        self.queue.enqueue(test_func, 1, 2)
+        self.queue.enqueue(add_func, 1, 2)
 
         worker = Worker(self.queue)
         workThread = WorkerThread()
@@ -94,6 +97,34 @@ class TestPysqesWorker(unittest.TestCase):
 
         logger.info("Verifying result {0}".format(self.backend.result))
         self.assertEqual(self.backend.result, '3')
+
+    def test_worker_sqs(self):
+        """
+        Actually test with sqs as the backend
+        """
+        if not AWS_ACCESS_KEY_ID:
+            return
+
+        conn = SQSConnection(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+        logging.debug("Conn created %s" % conn)
+        backend = WorkerBackend()
+        queue = Queue(conn, 'pysqes_test', backend=backend)
+        queue.enqueue(add_func, 1, 2)
+
+        runner = GeventRunner()
+        worker = Worker(queue, runner=runner)
+        runner.worker = worker
+        workThread = WorkerThread()
+        workThread.worker = worker
+        workThread.start()
+        try:
+            time.sleep(1)
+            worker.shutdown()
+        except:
+            pass
+
+        logger.info("Verifying result {0}".format(backend.result))
+        self.assertEqual(backend.result, '3')
 
 
 if __name__ == '__main__':
