@@ -1,3 +1,4 @@
+import logging
 import threading
 import unittest
 import time
@@ -5,10 +6,15 @@ import tempfile
 
 from pysqes.worker import Worker
 from pysqes.queue import Queue
+from pysqes.runners.gevent_runner import GeventRunner
 
 from tests.stubs import SQSConnStub
 
 from .test_tasks import test_func
+
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
 
 
 class WorkerBackend(object):
@@ -58,17 +64,35 @@ class TestPysqesWorker(unittest.TestCase):
     def test_worker(self):
         self.queue.enqueue(test_func, 1, 2)
 
-        worker = Worker(self.queue)
+        runner = GeventRunner()
+        worker = Worker(self.queue, runner=runner)
+        runner.worker = worker
         workThread = WorkerThread()
         workThread.worker = worker
         workThread.start()
-        #worker.work()
         try:
-            time.sleep(3)
+            time.sleep(1)
             worker.shutdown()
         except:
             pass
 
+        logger.info("Verifying result {0}".format(self.backend.result))
+        self.assertEqual(self.backend.result, '3')
+
+    def test_worker_process(self):
+        self.queue.enqueue(test_func, 1, 2)
+
+        worker = Worker(self.queue)
+        workThread = WorkerThread()
+        workThread.worker = worker
+        workThread.start()
+        try:
+            time.sleep(1)
+            worker.shutdown()
+        except:
+            pass
+
+        logger.info("Verifying result {0}".format(self.backend.result))
         self.assertEqual(self.backend.result, '3')
 
 
