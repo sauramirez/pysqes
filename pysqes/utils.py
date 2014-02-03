@@ -8,3 +8,7 @@ def import_fn(fn_name):
     module_name, attribute = fn_name.rsplit('.', 1)
     module = importlib.import_module(module_name)
     return getattr(module, attribute)
+
+
+def import_module(module_name):
+    return importlib.import_module(module_name)

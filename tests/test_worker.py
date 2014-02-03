@@ -69,7 +69,6 @@ class TestPysqesWorker(unittest.TestCase):
 
         runner = GeventRunner()
         worker = Worker(self.queue, runner=runner)
-        runner.worker = worker
         workThread = WorkerThread()
         workThread.worker = worker
         workThread.start()

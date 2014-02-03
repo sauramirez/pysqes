@@ -31,7 +31,9 @@ class Worker(object):
             self.runner = runner
         else:
             self.runner = ProcessRunner()
-            self.runner.worker = self
+
+        # set the runner worker delegate
+        self.runner.worker = self
 
     def register_signal_handlers(self):
         """
