@@ -41,9 +41,6 @@ class BaseCommand(object):
     help = ""
     args = ""
 
-    #def __init__(self):
-        #pass
-
     def usage(self, subcommand):
         usage = '%prog {0} [options] {1}'.format(subcommand, self.args)
         if self.help:
@@ -51,17 +48,12 @@ class BaseCommand(object):
         else:
             return usage
 
-    def execute(self, prog_name, command, *args):
-        pass
-
     def run_from_argv(self, argv):
         if len(argv) < 2:
             logger.debug("You need to specify a command")
             raise Exception("Not enough arguments, missing pysqes command")
 
         self.execute(argv[0], argv[1])
-        #parser = self.get_parser(argv[0], argv[1])
-        #options, args = parser.parse_args(argv[2:])
 
     def run_from_commandline(self, argv):
         argv = sys.argv if argv is None else argv
@@ -74,11 +66,6 @@ class BaseCommand(object):
             usage=self.usage(subcommand),
             option_list=self.option_list
         )
-
-    def execute(self, *args, **kwargs):
-        output = self.handle(*args, **kwargs)
-
-        return output
 
     def handle(self):
         raise NotImplementedError('Command subclasses should implement this method')
