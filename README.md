@@ -42,14 +42,25 @@ worker = Worker(queue, runner=runner)
 worker.work()
 ```
 
-Worker Runners (new in 0.2)
+New in 0.2
 ======
+
+Worker Runners
+=====
 Pysqes now supports having different runners, the default one is the
 process runner, which will spawn a new a process and run the task in it.
 We also have a gevent runner, which you can use by using the gevent flag
 in the command line and set the number of threads you would like to have
 running. 
 Note: It has only been tested with gevent 1.0
+
+Command line scripts
+=====
+Pysqes now comes with command line scripts. The worker command will be the only
+one available for this version, but task and peek commands may be coming to 0.3.
+```shell
+pysqes worker --gevent --workerpath=/home/user/pysqesproj/ --config=pysqesconfig --configpath=/home/user/pysqesproj/settings/
+```
 
 Running the tests
 ======
@@ -60,5 +71,11 @@ using the new discover runner included in the unittest module:
 python -m unittest discover -s tests
 ```
 
-else you can just run each unit test individually.
+or you can just run each unit test individually.
 
+
+Coming in 0.3
+======
+* New command line scripts.
+* Tests for command line scripts.
+* Better logging.
