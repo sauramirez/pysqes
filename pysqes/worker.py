@@ -1,24 +1,39 @@
-import pickle
 import signal
-import time
+import logging
 
-from .task import BasePySQS
+from .runners.process_runner import ProcessRunner
+
+logger = logging.getLogger(__name__)
 
 
-class SQSWorker(BasePySQS):
+class Worker(object):
     """
-    Workers are in charge of fetching new jobs from SQS and then executes them
+    Workers are in charge of fetching new jobs from the queue and executing them
     if there are any.
     """
     _shutdown = False
     # the backend should speciy a store_result method
     backend = None
+    runner = None
+    # number of messages to get from the queue at the same time
+    num_messages = 5
 
-    def __init__(self, *args, **kwargs):
-        self.backend = kwargs.pop('backend', None)
+    def __init__(self, queue, runner=None, num_messages=5, *args, **kwargs):
+        """
+        """
+        self.queue = queue
+
         # time to wait in between jobs
         self.wait_time = kwargs.pop('wait_time', 3)
-        super(SQSWorker, self).__init__(*args, **kwargs)
+        self.num_messages = num_messages
+
+        if runner:
+            self.runner = runner
+        else:
+            self.runner = ProcessRunner()
+
+        # set the runner worker delegate
+        self.runner.worker = self
 
     def register_signal_handlers(self):
         """
@@ -31,6 +46,9 @@ class SQSWorker(BasePySQS):
 
     def shutdown(self):
         self._shutdown = True
+        self.runner.shutdown()
+
+        raise SystemExit()
 
     def _shutdown_signal(self, signum, frame):
         self.shutdown()
@@ -44,39 +62,14 @@ class SQSWorker(BasePySQS):
 
         # start running our worker
         while True:
-            messages = self.queue.get_messages()
-            for message in messages:
-                task = message.get_body()
-                task = pickle.loads(task)
-                task_id = task['task_id']
-                task_name = task['name']
-                success = False
-                tries = 0
-                while not success and tries < 3:
-                    try:
-                        result = task['fun'](*task['args'], **task['kwargs'])
-                        success = True
-                    except Exception, e:
-                        result = e
-                    tries += 1
-
-                self.queue.delete_message(message)
-
-                # if a backend has been specified then we can run a save
-                # method on it
-                if self.backend:
-                    self.backend.store_result(
-                        success, result, task_id, task_name,
-                        arguments=task['args'], karguments=task['kwargs'])
-
-            # if no messages received then we can just sleep for a while
-            if len(messages) == 0:
-                time.sleep(self.wait_time)
+            tasks = self.queue.dequeue(num_messages=self.num_messages)
+            self.runner.perform_tasks(tasks)
 
             if self._shutdown:
                 break
 
-    @classmethod
-    def run(cls, queue, timeout):
-        worker = cls(queue, timeout)
-        worker.work()
+    def finished_task(self, task, message):
+        return self.queue.delete_message(message)
+
+    def finished_tasks(self, tasks, messages):
+        return self.queue.delete_message_batch(messages)

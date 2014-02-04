@@ -1,8 +1,4 @@
+import os
 
-AWS_ACCESS_KEY_ID = "AWSACCESSKEY"
-AWS_SECRET_ACCESS_KEY = "AWSSECRETKEY"
-
-try:
-    from localconf import *
-except:
-    pass
+AWS_ACCESS_KEY_ID = os.environ.get("PYSQES_AWSACCESSKEYID", None)
+AWS_SECRET_ACCESS_KEY = os.environ.get("PYSQES_SECRET_ACCESSKEY", None)

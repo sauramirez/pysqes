@@ -1,6 +1,11 @@
 from distutils.core import setup
 from setuptools import find_packages
 
+entry_points = {}
+console_scripts = entry_points['console_scripts'] = [
+    'pysqes = pysqes.bin.pysqes:main'
+]
+
 setup(
     name='pysqes',
     version='0.2',
@@ -14,6 +19,7 @@ setup(
     keywords=('queue', 'amazon', 'distributed'),
     packages=find_packages(exclude=['tests', ]),
     include_package_data = True,
+    entry_points=entry_points,
     install_requires=[
         item for item in
         open("requirements.txt").read().split("\n")
