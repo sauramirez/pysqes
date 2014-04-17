@@ -56,6 +56,7 @@ Command line scripts
 =====
 Pysqes now comes with command line scripts. The worker command will be the only
 one available for this version, but task and peek commands may be coming to 0.3.
+
 .. code-block:: bash
 
     pysqes worker --gevent --workerpath=/home/user/pysqesproj/ --config=pysqesconfig --configpath=/home/user/pysqesproj/settings/
