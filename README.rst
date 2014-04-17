@@ -11,36 +11,35 @@ to the queue when you run the delay method that will be added
 to the function. The delay function takes the parameters that will
 be used by the worker when it actually executes the task.
 
-```python
-from boto.sqs.connection import SQSConnection
+.. code-block:: python
 
-from pysqes.task import Task
+    from boto.sqs.connection import SQSConnection
+    from pysqes.task import Task
 
-conn = SQSConnection('ACCESS_KEY', 'SECRET_KEY')
-queue = Queue(conn, 'pysqes_test', backend=backend)
+    conn = SQSConnection('ACCESS_KEY', 'SECRET_KEY')
+    queue = Queue(conn, 'pysqes_test', backend=backend)
 
-def add(a, b):
-    return a + b
+    def add(a, b):
+        return a + b
 
-# this will submit a job to the queue
-queue.enqueue(add_func, 1, 2)
-```
+    # this will submit a job to the queue
+    queue.enqueue(add, 1, 2)
 
 You can run the task by using the work method included in the
 SQSWorker class, all you need to do is create a worker instance.
-```python
-from boto.sqs.connection import SQSConnection
 
-from pysqes.runners.gevent_runner import GeventRunner
-from pysqes.worker import Worker
+.. code-block:: python
 
-conn = SQSConnection('ACCESS_KEY', 'SECRETE_KEY')
-runner = GeventRunner()
-queue = Queue(conn, 'pysqes_test', backend=backend)
-worker = Worker(queue, runner=runner)
+    from boto.sqs.connection import SQSConnection
+    from pysqes.runners.gevent_runner import GeventRunner
+    from pysqes.worker import Worker
 
-worker.work()
-```
+    conn = SQSConnection('ACCESS_KEY', 'SECRETE_KEY')
+    runner = GeventRunner()
+    queue = Queue(conn, 'pysqes_test', backend=backend)
+    worker = Worker(queue, runner=runner)
+
+    worker.work()
 
 New in 0.2
 ======
@@ -58,18 +57,19 @@ Command line scripts
 =====
 Pysqes now comes with command line scripts. The worker command will be the only
 one available for this version, but task and peek commands may be coming to 0.3.
-```shell
-pysqes worker --gevent --workerpath=/home/user/pysqesproj/ --config=pysqesconfig --configpath=/home/user/pysqesproj/settings/
-```
+
+.. code-block:: bash
+
+    pysqes worker --gevent --workerpath=/home/user/pysqesproj/ --config=pysqesconfig --configpath=/home/user/pysqesproj/settings/
 
 Running the tests
 ======
 If you are using python 2.7 you can run the unit tests by
 using the new discover runner included in the unittest module:
 
-```shell
-python -m unittest discover -s tests
-```
+.. code-block:: bash
+
+    python -m unittest discover -s tests
 
 or you can just run each unit test individually.
 

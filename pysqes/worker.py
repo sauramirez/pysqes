@@ -63,13 +63,14 @@ class Worker(object):
         # start running our worker
         while True:
             tasks = self.queue.dequeue(num_messages=self.num_messages)
-            self.runner.perform_tasks(tasks)
+            if tasks:
+                self.runner.perform_tasks(tasks, self)
 
             if self._shutdown:
                 break
 
-    def finished_task(self, task, message):
+    def finished_task(self, message):
         return self.queue.delete_message(message)
 
-    def finished_tasks(self, tasks, messages):
+    def finished_tasks(self, messages):
         return self.queue.delete_message_batch(messages)

@@ -15,16 +15,25 @@ class ProcessRunner(BaseRunner):
     """
     _child_process = 0
 
-    def perform_tasks(self, tasks):
+    def perform_tasks(self, tasks, worker):
+        messages = []
         for message, task in tasks:
             self.perform_task(task)
+            messages.append(message)
 
-    def perform_task(self, task):
+        worker.finished_tasks(messages)
+
+    def perform_task(self, task, worker=None):
         child_pid = os.fork()
         if child_pid == 0:
-            result = task.run()
+            try:
+                result = task.run()
+            except Exception, e:
+                result = e
             logger.info("Result %s" % result)
-            os._exit(int(not result))
+            if worker:
+                worker.finished_task(task[0])
+            #os._exit(int(not result))
 
         else:
             logger.info("Started forked worker")
