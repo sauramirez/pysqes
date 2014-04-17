@@ -27,6 +27,7 @@ be used by the worker when it actually executes the task.
 
 You can run the task by using the work method included in the
 SQSWorker class, all you need to do is create a worker instance.
+
 .. code-block:: python
 
     from boto.sqs.connection import SQSConnection
