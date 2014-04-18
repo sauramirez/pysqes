@@ -1,7 +1,12 @@
 pysqes
 ======
 
-Simple queue service for python using SQS and boto.
+*Simple queue service for python using SQS and boto.*
+
+.. image:: https://travis-ci.org/sauramirez/pysqes.png
+   :alt: Build Status
+   :target: https://travis-ci.org/sauramirez/pysqes
+
 
 Usage
 ======
