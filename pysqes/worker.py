@@ -1,6 +1,8 @@
 import signal
 import logging
 
+from time import sleep
+
 from .runners.process_runner import ProcessRunner
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,7 @@ class Worker(object):
     runner = None
     # number of messages to get from the queue at the same time
     num_messages = 5
+    delay = 1
 
     def __init__(self, queue, runner=None, num_messages=5, *args, **kwargs):
         """
@@ -26,6 +29,7 @@ class Worker(object):
         # time to wait in between jobs
         self.wait_time = kwargs.pop('wait_time', 3)
         self.num_messages = num_messages
+        self.delay = kwargs.pop('delay', 1)
 
         if runner:
             self.runner = runner
@@ -65,6 +69,9 @@ class Worker(object):
             tasks = self.queue.dequeue(num_messages=self.num_messages)
             if tasks:
                 self.runner.perform_tasks(tasks)
+            else:
+                # no tasks wait for a small time before checking again
+                sleep(self.delay)
 
             if self._shutdown:
                 break

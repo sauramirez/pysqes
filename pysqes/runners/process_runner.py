@@ -18,8 +18,8 @@ class ProcessRunner(BaseRunner):
     def perform_tasks(self, tasks):
         messages = []
         for message, task in tasks:
-            self.perform_task(task)
-            messages.append(message, False)
+            self.perform_task(task, False)
+            messages.append(message)
 
         self.finished_tasks(messages)
 
@@ -30,11 +30,10 @@ class ProcessRunner(BaseRunner):
                 result = task.run()
             except Exception, e:
                 result = e
-            logger.info("Result %s" % result)
 
+            logger.info("Result %s" % result)
             if delete_message:
                 self.finished_task(task[0])
-            #os._exit(int(not result))
 
         else:
             logger.info("Started forked worker")
