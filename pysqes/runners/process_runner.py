@@ -15,15 +15,15 @@ class ProcessRunner(BaseRunner):
     """
     _child_process = 0
 
-    def perform_tasks(self, tasks, worker):
+    def perform_tasks(self, tasks):
         messages = []
         for message, task in tasks:
             self.perform_task(task)
-            messages.append(message)
+            messages.append(message, False)
 
-        worker.finished_tasks(messages)
+        self.finished_tasks(messages)
 
-    def perform_task(self, task, worker=None):
+    def perform_task(self, task, delete_message=True):
         child_pid = os.fork()
         if child_pid == 0:
             try:
@@ -31,8 +31,9 @@ class ProcessRunner(BaseRunner):
             except Exception, e:
                 result = e
             logger.info("Result %s" % result)
-            if worker:
-                worker.finished_task(task[0])
+
+            if delete_message:
+                self.finished_task(task[0])
             #os._exit(int(not result))
 
         else:

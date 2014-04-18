@@ -64,7 +64,7 @@ class Worker(object):
         while True:
             tasks = self.queue.dequeue(num_messages=self.num_messages)
             if tasks:
-                self.runner.perform_tasks(tasks, self)
+                self.runner.perform_tasks(tasks)
 
             if self._shutdown:
                 break

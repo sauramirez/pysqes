@@ -13,7 +13,7 @@ class TestTask(unittest.TestCase):
         task = Task(add_func, [1, 2])
         task_data = task.serialize()
 
-        self.assertEqual(task_data, '{"args": [1, 2], "_fn": "tests.utils.add_func", "kwargs": {}}', msg="Error in task serialization")
+        self.assertTrue('[1, 2]' in task_data and "tests.utils.add_func" in task_data, msg="Error in task serialization")
 
         task2 = Task(data={
             "key": 3

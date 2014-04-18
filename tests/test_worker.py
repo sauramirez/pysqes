@@ -8,7 +8,6 @@ from boto.sqs.connection import SQSConnection
 
 from pysqes.worker import Worker
 from pysqes.queue import Queue
-from pysqes.runners.gevent_runner import GeventRunner
 
 from tests.stubs import SQSConnStub
 
@@ -66,6 +65,12 @@ class TestPysqesWorker(unittest.TestCase):
 
     def test_worker(self):
         self.queue.enqueue(add_func, 1, 2)
+
+        try:
+            import gevent
+            from pysqes.runners.gevent_runner import GeventRunner
+        except ImportError:
+            return
 
         runner = GeventRunner()
         worker = Worker(self.queue, runner=runner)

@@ -8,10 +8,10 @@ console_scripts = entry_points['console_scripts'] = [
 
 setup(
     name='pysqes',
-    version='0.2',
+    version='0.2.1',
     license='Apache',
     description='A simple queue service using Amazon SQS and boto',
-    long_description=open('README.md').read(),
+    long_description=open('README.rst').read(),
     author='Essau Ramirez',
     author_email='saumotions+pypi@gmail.com',
     url='https://github.com/sauramirez/pysqes',

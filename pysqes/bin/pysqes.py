@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 def main(argv=None):
-    print "running pysqes"
-    print argv
-
     pysqes_command = PysqesCommand()
     pysqes_command.run_from_commandline(argv)
 

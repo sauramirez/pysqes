@@ -29,8 +29,8 @@ class BaseRunner(object):
         """
         raise NotImplemented()
 
-    def finished_task(self, task):
-        self.worker.finished_task(task)
+    def finished_task(self, message):
+        self.worker.finished_task(message)
 
-    def finished_tasks(self, tasks, messages):
-        self.worker.finished_tasks(tasks, messages)
+    def finished_tasks(self, messages):
+        self.worker.finished_tasks(messages)
