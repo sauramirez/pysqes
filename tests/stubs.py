@@ -11,11 +11,18 @@ class SQSConnStub(object):
         return SQSQueueStub()
 
     def lookup(self, name):
-        return SQSQueueStub()
+        if name == False:
+            return None
+
+        return SQSQueueStub(name)
 
 
 class SQSQueueStub(object):
     _queue = deque()
+    name = None
+
+    def __init__(self, name=None):
+        self.name = name
 
     def write(self, m):
         return self._queue.append(m)
@@ -28,9 +35,11 @@ class SQSQueueStub(object):
 
     def delete_message(self, message):
         logging.info("deleting message %s" % message)
+        return message
 
     def delete_message_batch(self, messages):
         logging.info("deleting messages %s" % messages)
+        return messages
 
     def read(self):
         return self._queue.popleft()
